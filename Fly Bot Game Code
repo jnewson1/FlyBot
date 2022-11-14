@@ -1,0 +1,79 @@
+import pygame
+import os
+import random
+from pygame import *
+pygame.font.init()
+
+pygame.init()
+width, height = 400, 400
+screen = display.set_mode((width, height))
+display.set_caption("Fly Bot Adventures: Quest for the Coins")
+
+white = (255, 255, 255)
+black = (0, 0, 0)
+
+score_font = pygame.font.SysFont('times new roman', 20)
+
+FPS = 60
+gravity = 2
+xvel = 3
+yvel = 4
+spaceship_width, spaceship_height = 50, 50
+
+coin_hit = pygame.USEREVENT + 1
+
+fly_bot_start = pygame.image.load(os.path.join('FlyBot Assets', 'fly_bot.png'))
+fly_bot_image = pygame.transform.scale(fly_bot_start, (40, 45))
+coin_start = pygame.image.load(os.path.join('FlyBot Assets', 'coin.png'))
+coin_image = pygame.transform.scale(coin_start, (20, 20))
+
+
+def draw_window(bot, coin, score):
+    screen.fill(white)
+    score_text = score_font.render("Score: " + str(score), 1, black)
+    screen.blit(score_text, (5, 5))
+    screen.blit(fly_bot_image, (bot.x, bot.y))
+    screen.blit(coin_image, (coin.x, coin.y))
+    display.update()
+
+
+def fly_bot_movement(keys_pressed, bot):
+    if keys_pressed[pygame.K_UP] and bot.y - yvel > 0:
+        bot.y -= yvel
+    if keys_pressed[pygame.K_DOWN] and bot.y + yvel + bot.height < height:
+        bot.y += yvel
+    if keys_pressed[pygame.K_LEFT] and bot.x - xvel > 0:
+        bot.x -= xvel
+    if keys_pressed[pygame.K_RIGHT] and bot.x + xvel + bot.width < width:
+        bot.x += xvel
+
+
+def handle_coin(bot, coin):
+    if bot.colliderect(coin):
+        pygame.event.post(pygame.event.Event(coin_hit))
+        coin.x = random.randint(25, 375)
+        coin.y = random.randint(25, 375)
+
+
+bot = pygame.Rect(width/2-20, 150, 40, 45)
+coin = pygame.Rect(width/2-10, 30, 20, 20)
+bot_health = 50
+score = 0
+clock = time.Clock()
+run = True
+while run:
+    clock.tick(FPS)
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            run = False
+
+        if event.type == coin_hit:
+            score += 1
+
+    if bot.y + gravity + bot.height < height:
+        bot.y += gravity
+    keys_pressed = pygame.key.get_pressed()
+    key_down = pygame.KEYDOWN
+    fly_bot_movement(keys_pressed, bot)
+    handle_coin(bot, coin)
+    draw_window(bot, coin, score)
